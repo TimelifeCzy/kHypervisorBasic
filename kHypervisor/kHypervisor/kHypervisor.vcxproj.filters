@@ -1,0 +1,173 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\HyperPlatform\driver.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HyperPlatform\ept.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HyperPlatform\kernel_stl.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HyperPlatform\log.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HyperPlatform\performance.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HyperPlatform\util.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HyperPlatform\\vm.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="vmcs.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HyperPlatform\vmm.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HyperPlatform\power_callback.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HyperPlatform\global_object.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HyperPlatform\hotplug_callback.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="vmx.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="vmx_common.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="hook.cpp">
+      <Filter>hook</Filter>
+    </ClCompile>
+    <ClCompile Include="Filehook.cpp">
+      <Filter>hook</Filter>
+    </ClCompile>
+    <ClCompile Include="shadow_hook.cpp">
+      <Filter>hook</Filter>
+    </ClCompile>
+    <ClCompile Include="list.c">
+      <Filter>util_public</Filter>
+    </ClCompile>
+    <ClCompile Include="hook_inst.cpp">
+      <Filter>hook</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\HyperPlatform\asm.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HyperPlatform\common.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HyperPlatform\driver.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HyperPlatform\ept.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HyperPlatform\ia32_type.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HyperPlatform\kernel_stl.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HyperPlatform\log.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HyperPlatform\perf_counter.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HyperPlatform\performance.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HyperPlatform\util.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HyperPlatform\vm.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HyperPlatform\vmm.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HyperPlatform\power_callback.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HyperPlatform\global_object.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HyperPlatform\hotplug_callback.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HyperPlatform\util_page_constants.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="vmx.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="vmcs.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="vmx_common.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="hook.h">
+      <Filter>hook</Filter>
+    </ClInclude>
+    <ClInclude Include="Filehook.h">
+      <Filter>hook</Filter>
+    </ClInclude>
+    <ClInclude Include="shadow_hook.h">
+      <Filter>hook</Filter>
+    </ClInclude>
+    <ClInclude Include="PE.h">
+      <Filter>util_public</Filter>
+    </ClInclude>
+    <ClInclude Include="list.h">
+      <Filter>util_public</Filter>
+    </ClInclude>
+    <ClInclude Include="CPU.h">
+      <Filter>util_public</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>util_public</Filter>
+    </ClInclude>
+    <ClInclude Include="Native.h">
+      <Filter>util_public</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Inf Include="kHypervisor.inf" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="..\HyperPlatform\Arch\x86\x86.asm">
+      <Filter>Source</Filter>
+    </MASM>
+    <MASM Include="..\HyperPlatform\Arch\x64\x64.asm">
+      <Filter>Source</Filter>
+    </MASM>
+    <MASM Include="msrhook.asm">
+      <Filter>hook</Filter>
+    </MASM>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Include">
+      <UniqueIdentifier>{faf82dec-0f8d-4818-8bb3-e45d8b59539a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{6a95ba81-244d-489f-98f5-3fc3036eb376}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="hook">
+      <UniqueIdentifier>{2f4d7527-1224-4b2a-9104-62e5cf72fa6b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="util_public">
+      <UniqueIdentifier>{6b1fdd79-6390-4d4e-a4e9-3bd7ea22dca1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
