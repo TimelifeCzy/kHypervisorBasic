@@ -1,4 +1,4 @@
 # kHypervisor_MsrEpt_Hook
-基于kHypervisor框架添加了Msr_Ept_WinApiHook。
+基于kHypervisor框架添加了Msr/Ept Hook。
 
 kHypervisor: https://github.com/Kelvinhack/kHypervisor
