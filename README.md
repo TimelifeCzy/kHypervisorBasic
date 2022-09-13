@@ -5,8 +5,8 @@ kHypervisor: https://github.com/Kelvinhack/kHypervisor
 
 **see directory: kHypervisor/kHypervisor**
 
-### v2.0
-khypervisor分離，設計了一套hv_lib連接接口
+### v2.0(待开发)
+根据Kelvinhack建议，可以尝试将khypervisor分离设计hv_lib接口
 ```
 |-- hv 
   |-- nested hv
