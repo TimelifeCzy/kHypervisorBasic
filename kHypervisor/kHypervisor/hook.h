@@ -36,6 +36,6 @@ extern "C" {
     BOOLEAN Hook_Analyze(void* address, BOOLEAN probe_address, BOOLEAN is64,
                             HOOK_INST* inst);
 
-    static BOOLEAN Hook_Tramp_CountBytes(void* SysProc, ULONG* ByteCount,
-                                         BOOLEAN is64, BOOLEAN probe);
+    //static BOOLEAN Hook_Tramp_CountBytes(void* SysProc, ULONG* ByteCount,
+    //                                     BOOLEAN is64, BOOLEAN probe);
     }

@@ -140,9 +140,10 @@ _Use_decl_annotations_ extern "C" bool ShInstallHook(
   info->handler = target->handler;
 
   // analys hook pointer
-  SIZE_T patch_size = 0; 
-  Hook_Tramp_CountBytes();
-  if (!patch_size) {
-    return false;
-  } 
+  //SIZE_T patch_size = 0; 
+  //Hook_Tramp_CountBytes();
+  //if (!patch_size) {
+  //  return false;
+  //} 
+  return true;
 }

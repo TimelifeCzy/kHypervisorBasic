@@ -62,33 +62,33 @@ extern "C" {
 //---------------------------------------------------------------------------
 BOOLEAN Hook_Tramp_CountBytes(void* SysProc, ULONG* ByteCount,
                                 BOOLEAN is64, BOOLEAN probe) {
-    UCHAR* addr = (UCHAR*)SysProc;
-    ULONG needlen =
-        (is64 == 9 ? 13 : (is64 ? 12 : (File_TrusteerLoaded() ? 6 : 5)));
-    ULONG copylen = 0;
+    //UCHAR* addr = (UCHAR*)SysProc;
+    //ULONG needlen =
+    //    (is64 == 9 ? 13 : (is64 ? 12 : (File_TrusteerLoaded() ? 6 : 5)));
+    //ULONG copylen = 0;
 
-    // count at least the (needlen) bytes of instructions from the
-    // original entry point to our stub, as we will overwrite that area
-    // later
+    //// count at least the (needlen) bytes of instructions from the
+    //// original entry point to our stub, as we will overwrite that area
+    //// later
 
-    while (1) {
-    HOOK_INST inst;
-    BOOLEAN ok = Hook_Analyze(addr, probe, is64, &inst);
-    if (!ok) return FALSE;
+    //while (1) {
+    //HOOK_INST inst;
+    //BOOLEAN ok = Hook_Analyze(addr, probe, is64, &inst);
+    //if (!ok) return FALSE;
 
-    if (inst.op1 == 0xFF && inst.op2 == 0x25 &&
-        *(ULONG*)&addr[2] == 0) {
-        // jmp dword/qword ptr [+00], so skip the following ULONG_PTR
-        inst.len += sizeof(ULONG_PTR);
-    }
+    //if (inst.op1 == 0xFF && inst.op2 == 0x25 &&
+    //    *(ULONG*)&addr[2] == 0) {
+    //    // jmp dword/qword ptr [+00], so skip the following ULONG_PTR
+    //    inst.len += sizeof(ULONG_PTR);
+    //}
 
-    copylen += inst.len;
-    if (copylen >= needlen) break;
+    //copylen += inst.len;
+    //if (copylen >= needlen) break;
 
-    addr += inst.len;
-    }
+    //addr += inst.len;
+    //}
 
-    *ByteCount = copylen;
+    //*ByteCount = copylen;
     return TRUE;
 }
 //=======================================================
@@ -383,6 +383,17 @@ NTSTATUS SHRestoreMsrSyscall(
   return STATUS_SUCCESS;
 }
 
+
+NTSTATUS MsrInitHookType(
+    const PSYSTEM_SERVICE_DESCRIPTOR_TABLE pssdt
+)
+{
+    if (!NT_SUCCESS(FileMsrHook(pssdt))) {
+        HYPERPLATFORM_LOG_DEBUG("Entry Msr_Hook_failure\r\n");
+    }
+    return STATUS_SUCCESS;
+}
+
 //	Msr Hook EntryPoint
 NTSTATUS SHInitMsrHook(
 	void* context
@@ -442,16 +453,6 @@ NTSTATUS SHInitMsrHook(
     return status;
   }
 
-  return STATUS_SUCCESS;
-}
-
-NTSTATUS MsrInitHookType(
-	const PSYSTEM_SERVICE_DESCRIPTOR_TABLE pssdt
-) 
-{
-  if (!NT_SUCCESS(FileMsrHook(pssdt))) {
-    HYPERPLATFORM_LOG_DEBUG("Entry Msr_Hook_failure\r\n");
-  }
   return STATUS_SUCCESS;
 }
 
