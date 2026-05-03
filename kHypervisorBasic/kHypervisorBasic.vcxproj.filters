@@ -42,6 +42,12 @@
     <ClInclude Include="hotplug_callback.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="hooks\hook_module.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="hv\hv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="ia32_type.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -93,6 +99,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="hotplug_callback.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hooks\hook_module.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hv\hv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="kernel_stl.cpp">

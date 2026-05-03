@@ -1277,7 +1277,16 @@ Return Value:
 			Ept01Data = VmmGetCurrentEpt01Pointer(guest_context);
 			if (Ept02Data && Ept12Data && Ept01Data)
 			{
-				EptpBuildNestedEpt(_Ept12Ptr, Ept12Data, Ept02Data);
+				const auto nested_ept_status =
+					EptpBuildNestedEpt(_Ept12Ptr, Ept12Data, Ept02Data);
+				if (!NT_SUCCESS(nested_ept_status))
+				{
+					EptFreeNestedEptData(Ept12Data, Ept02Data);
+					Ept02Data = nullptr;
+					Ept12Data = nullptr;
+					VMfailInvalid(VmmpGetFlagReg(guest_context));
+					return STATUS_INSUFFICIENT_RESOURCES;
+				}
 				
 				VmmSaveCurrentEpt02Pointer(guest_context, Ept02Data);
 				VmmSaveCurrentEpt12Pointer(guest_context, Ept12Data);
@@ -1286,6 +1295,12 @@ Return Value:
 
 				UtilVmWrite64(VmcsField::kEptPointer, Ept02Data->ept_pointer->all);
 				UtilInveptGlobal();
+			}
+			else
+			{
+				EptFreeNestedEptData(Ept12Data, Ept02Data);
+				VMfailInvalid(VmmpGetFlagReg(guest_context));
+				return STATUS_INSUFFICIENT_RESOURCES;
 			}
 		}
 #endif
@@ -1400,7 +1415,14 @@ Return Value:
 		 
 		// todo: check vcpu context ...'
 
-		nested_vmx = (VCPUVMX*)ExAllocatePool(NonPagedPoolNx, sizeof(VCPUVMX));
+		nested_vmx = reinterpret_cast<VCPUVMX*>(
+			ExAllocatePoolWithTag(NonPagedPoolNx, sizeof(VCPUVMX), kHyperPlatformCommonPoolTag));
+		if (!nested_vmx)
+		{
+			VMfailInvalid(VmmpGetFlagReg(guest_context));
+			break;
+		}
+		RtlZeroMemory(nested_vmx, sizeof(VCPUVMX));
 
 		nested_vmx->inRoot = RootMode;
 		nested_vmx->blockINITsignal = TRUE;
@@ -1491,7 +1513,7 @@ Return Value:
 		if (ept_data01 && ept_data12)
 		{
 			EptpValidateEpt(ept_data12, ept_data01);
-			ExFreePool(ept_data12); 
+			EptFreeNestedEptData(ept_data12, VmmGetCurrentEpt02Pointer(guest_context));
 			ept_data12 = nullptr;
 		} 
 
@@ -1504,7 +1526,15 @@ Return Value:
 
 		VmmpLeaveVmxMode(guest_context);
 
-		ExFreePool(vcpu_vmx);
+		if (vcpu_vmx->vmcs02_pa && vcpu_vmx->vmcs02_pa != 0xFFFFFFFFFFFFFFFF)
+		{
+			auto vmcs02_region_va = UtilVaFromPa(vcpu_vmx->vmcs02_pa);
+			if (vmcs02_region_va)
+			{
+				ExFreePoolWithTag(vmcs02_region_va, kHyperPlatformCommonPoolTag);
+			}
+		}
+		ExFreePoolWithTag(vcpu_vmx, kHyperPlatformCommonPoolTag);
 		vcpu_vmx = NULL;  
 
 		HYPERPLATFORM_LOG_DEBUG("VMXOFF Stopped Nested Virtualization, and Back to Normal Guest OS ");
@@ -1733,7 +1763,8 @@ Return Value:
 			break;
 		}
  
-		vmcs02_region_va = (PUCHAR)ExAllocatePool(NonPagedPoolNx, PAGE_SIZE); 
+		vmcs02_region_va = reinterpret_cast<PUCHAR>(
+			ExAllocatePoolWithTag(NonPagedPoolNx, PAGE_SIZE, kHyperPlatformCommonPoolTag));
 		if (!vmcs02_region_va)
 		{
 			HYPERPLATFORM_LOG_DEBUG_SAFE(("VMPTRLD: vmcs02_region_va NULL ! \r\n"),

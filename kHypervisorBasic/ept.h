@@ -45,7 +45,7 @@ static_assert(sizeof(EptCommonEntry) == 8, "Size check");
 
 
 // EPT related data stored in ProcessorSharedData
-typedef struct EptData {
+struct EptData {
 	EptPointer *ept_pointer;
 	EptCommonEntry *ept_pml4;
 
@@ -77,6 +77,10 @@ _IRQL_requires_max_(PASSIVE_LEVEL) EptData* EptInitialization();
 /// De-allocates \a ept_data and all resources referenced in it
 /// @param ept_data   A returned value of EptInitialization()
 void EptTermination(_In_ EptData* ept_data);
+
+/// Releases transient EPT data used while emulating nested EPT.
+void EptFreeNestedEptData(_In_opt_ EptData* ept_data12,
+                          _In_opt_ EptData* ept_data02);
 
 /// Handles VM-exit triggered by EPT violation
 /// @param ept_data   EptData to get an EPT pointer

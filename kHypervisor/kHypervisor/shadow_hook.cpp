@@ -13,6 +13,34 @@ struct Page {
   UCHAR* page;  // A page aligned copy of a page
 };
 
+static Page* ShpAllocateShadowPage() {
+  auto page = reinterpret_cast<Page*>(
+      ExAllocatePoolWithTag(NonPagedPoolNx, sizeof(Page), 'pShS'));
+  if (!page) {
+    return nullptr;
+  }
+  RtlSecureZeroMemory(page, sizeof(Page));
+
+  page->page = reinterpret_cast<UCHAR*>(
+      ExAllocatePoolWithTag(NonPagedPoolNx, PAGE_SIZE, 'gShS'));
+  if (!page->page) {
+    ExFreePoolWithTag(page, 'pShS');
+    return nullptr;
+  }
+  RtlSecureZeroMemory(page->page, PAGE_SIZE);
+  return page;
+}
+
+static void ShpFreeShadowPage(Page* page) {
+  if (!page) {
+    return;
+  }
+  if (page->page) {
+    ExFreePoolWithTag(page->page, 'gShS');
+  }
+  ExFreePoolWithTag(page, 'pShS');
+}
+
 // Contains a single steal hook information
 struct HookInformation {
   void* patch_address;  // An address where a hook is installed
@@ -100,9 +128,16 @@ _Use_decl_annotations_ EXTERN_C static TrampolineCode ShpMakeTrampolineCode(
 _Use_decl_annotations_ extern "C" bool ShInstallHook(
     SharedShadowHookData* shared_sh_data, void* address,
     ShadowHookTarget* target) {
+  if (!shared_sh_data || !address || !target || !target->handler) {
+    return false;
+  }
+
   // create hook information
   HookInformation* info = (HookInformation*)ExAllocatePoolWithTag(
-      NonPagedPool, sizeof(HookInformation), 'Tag');
+      NonPagedPoolNx, sizeof(HookInformation), 'iShS');
+  if (!info) {
+    return false;
+  }
   RtlSecureZeroMemory(info, sizeof(HookInformation));
 
   HookInformation* reusable_info = nullptr;
@@ -114,7 +149,7 @@ _Use_decl_annotations_ extern "C" bool ShInstallHook(
       reusable_info = shaobj->hooks;
       break;
     }
-    shaobj = (SharedShadowHookData*)List_Next(shared_sh_data);
+    shaobj = (SharedShadowHookData*)List_Next(shaobj);
   }
 
   // find Success && save old rw exec attr
@@ -122,12 +157,14 @@ _Use_decl_annotations_ extern "C" bool ShInstallHook(
     info->shadow_page_base_for_rw = reusable_info->shadow_page_base_for_rw;
     info->shadow_page_base_for_exec = reusable_info->shadow_page_base_for_exec;
   } else {
-    Page* page =
-        (Page*)ExAllocatePoolWithTag(NonPagedPool, sizeof(Page), 'Tag');
-    Page* page1 =
-        (Page*)ExAllocatePoolWithTag(NonPagedPool, sizeof(Page), 'Tag');
-    RtlSecureZeroMemory(page, sizeof(Page));
-    RtlSecureZeroMemory(page1, sizeof(Page));
+    Page* page = ShpAllocateShadowPage();
+    Page* page1 = ShpAllocateShadowPage();
+    if (!page || !page1) {
+      ShpFreeShadowPage(page);
+      ShpFreeShadowPage(page1);
+      ExFreePoolWithTag(info, 'iShS');
+      return false;
+    }
     info->shadow_page_base_for_rw = page;
     info->shadow_page_base_for_exec = page1;
     auto page_base = PAGE_ALIGN(address);

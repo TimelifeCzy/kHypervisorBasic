@@ -891,15 +891,45 @@ _Use_decl_annotations_ static EptCommonEntry *EptpGetEptPtEntry(
 
 // Frees all EPT stuff
 _Use_decl_annotations_ void EptTermination(EptData *ept_data) {
+  if (!ept_data) {
+    return;
+  }
+
   HYPERPLATFORM_LOG_DEBUG("Used pre-allocated entries  = %2d / %2d",
                           ept_data->preallocated_entries_count,
                           kEptpNumberOfPreallocatedEntries);
 
-  EptpFreeUnusedPreAllocatedEntries(ept_data->preallocated_entries,
-                                    ept_data->preallocated_entries_count);
-  EptpDestructTables(ept_data->ept_pml4, 4);
-  ExFreePoolWithTag(ept_data->ept_pointer, kHyperPlatformCommonPoolTag);
+  if (ept_data->preallocated_entries) {
+    EptpFreeUnusedPreAllocatedEntries(ept_data->preallocated_entries,
+                                      ept_data->preallocated_entries_count);
+  }
+  if (ept_data->ept_pml4) {
+    EptpDestructTables(ept_data->ept_pml4, 4);
+  }
+  if (ept_data->ept_pointer) {
+    ExFreePoolWithTag(ept_data->ept_pointer, kHyperPlatformCommonPoolTag);
+  }
   ExFreePoolWithTag(ept_data, kHyperPlatformCommonPoolTag);
+}
+
+_Use_decl_annotations_ void EptFreeNestedEptData(EptData *ept_data12,
+                                                  EptData *ept_data02) {
+  if (ept_data02) {
+    if (ept_data02->ept_pml4) {
+      EptpDestructTables(ept_data02->ept_pml4, 4);
+    }
+    if (ept_data02->ept_pointer) {
+      ExFreePoolWithTag(ept_data02->ept_pointer, kHyperPlatformCommonPoolTag);
+    }
+    ExFreePoolWithTag(ept_data02, kHyperPlatformCommonPoolTag);
+  }
+
+  if (ept_data12) {
+    if (ept_data12->ept_pointer) {
+      ExFreePoolWithTag(ept_data12->ept_pointer, kHyperPlatformCommonPoolTag);
+    }
+    ExFreePoolWithTag(ept_data12, kHyperPlatformCommonPoolTag);
+  }
 }
 
 // Frees all unused pre-allocated EPT entries. Other used entries should be
@@ -1114,77 +1144,79 @@ NTSTATUS  EptpBuildNestedEpt(
 	EptData* ept_data12,
 	EptData* ept_data02)
 {
-	do { 
-		EptCommonEntry* Pml4Entry = NULL;
-		EptPointer*		 Ept02Ptr = NULL;
-		EptPointer*		 Ept12Ptr = NULL;
-		ULONG64			_Ept12Ptr = vmcs12_va;
-		if (!vmcs12_va || !ept_data12 || !ept_data02)
-		{
-			break;
-		}
+	if (!vmcs12_va || !ept_data12 || !ept_data02) {
+		return STATUS_INVALID_PARAMETER;
+	}
 
-		Ept12Ptr = (EptPointer*)ExAllocatePoolWithTag(NonPagedPoolMustSucceed, PAGE_SIZE, 'eptp');
-		if (!Ept12Ptr)
-		{
-			break;
-		} 
-		RtlZeroMemory(Ept12Ptr, PAGE_SIZE); 
-		  
-		Ept02Ptr = (EptPointer*)ExAllocatePoolWithTag(NonPagedPoolMustSucceed, PAGE_SIZE, 'eptp');
-		if (!Ept02Ptr)
-		{
-			ExFreePool(Ept12Ptr);
-			break;
-		}
-		RtlZeroMemory(Ept02Ptr, PAGE_SIZE);
+	EptPointer* Ept12Ptr = reinterpret_cast<EptPointer*>(
+		ExAllocatePoolWithTag(NonPagedPoolNx, PAGE_SIZE, kHyperPlatformCommonPoolTag));
+	if (!Ept12Ptr) {
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+	RtlZeroMemory(Ept12Ptr, PAGE_SIZE);
 
-		Pml4Entry = (EptCommonEntry*)ExAllocatePoolWithTag(NonPagedPoolMustSucceed, PAGE_SIZE, 'pml4');
-		if (!Pml4Entry)
-		{
-			ExFreePool(Ept12Ptr);
-			ExFreePool(Ept02Ptr);
-			break;
-		}  
-		RtlZeroMemory(Pml4Entry, PAGE_SIZE);
-		  
-		Ept12Ptr->all = _Ept12Ptr;
+	EptPointer* Ept02Ptr = reinterpret_cast<EptPointer*>(
+		ExAllocatePoolWithTag(NonPagedPoolNx, PAGE_SIZE, kHyperPlatformCommonPoolTag));
+	if (!Ept02Ptr) {
+		ExFreePoolWithTag(Ept12Ptr, kHyperPlatformCommonPoolTag);
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+	RtlZeroMemory(Ept02Ptr, PAGE_SIZE);
 
-		Pml4Entry->fields.read_access = false;
-		Pml4Entry->fields.execute_access = false;
-		Pml4Entry->fields.memory_type = 0;
-		Pml4Entry->fields.write_access = false;
+	EptCommonEntry* Pml4Entry = reinterpret_cast<EptCommonEntry*>(
+		ExAllocatePoolWithTag(NonPagedPoolNx, PAGE_SIZE, kHyperPlatformCommonPoolTag));
+	if (!Pml4Entry) {
+		ExFreePoolWithTag(Ept12Ptr, kHyperPlatformCommonPoolTag);
+		ExFreePoolWithTag(Ept02Ptr, kHyperPlatformCommonPoolTag);
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+	RtlZeroMemory(Pml4Entry, PAGE_SIZE);
 
-		Ept02Ptr->fields.memory_type = static_cast<ULONG>(memory_type::kWriteBack);
-		Ept02Ptr->fields.pml4_address = UtilPfnFromPa(UtilPaFromVa(Pml4Entry));
-		Ept02Ptr->fields.page_walk_length = 4 - 1;
-		Ept02Ptr->fields.enable_accessed_and_dirty_flags = false;
-		 
-	 	const auto pm_ranges = UtilGetPhysicalMemoryRanges();
-		for (auto run_index = 0ul; run_index < pm_ranges->number_of_runs;
-			++run_index) {
-			const auto run = &pm_ranges->run[run_index];
-			const auto base_addr = run->base_page * PAGE_SIZE;
-			for (auto page_index = 0ull; page_index < run->page_count; ++page_index) {
-				const auto indexed_addr = base_addr + page_index * PAGE_SIZE;
-				EptpConstructTables(Pml4Entry, 4, indexed_addr, nullptr); 
-				EptpConstructTablesEx(Pml4Entry, 4, indexed_addr, nullptr, ept_data12->ept_pml4);
-			}
-		} 
-
+	Ept12Ptr->all = vmcs12_va;
+	ept_data12->ept_pointer = Ept12Ptr;
+	ept_data12->ept_pml4 =
+		reinterpret_cast<EptCommonEntry*>(UtilVaFromPfn(Ept12Ptr->fields.pml4_address));
+	if (!ept_data12->ept_pml4) {
 		ept_data02->ept_pointer = Ept02Ptr;
 		ept_data02->ept_pml4 = Pml4Entry;
-	 
-		ept_data12->ept_pointer = Ept12Ptr;
-		ept_data12->ept_pml4 = (EptCommonEntry*)UtilVaFromPfn(Ept12Ptr->fields.pml4_address);	  	 
-	} while (FALSE);
+		EptFreeNestedEptData(ept_data12, ept_data02);
+		return STATUS_INVALID_ADDRESS;
+	}
+
+	Ept02Ptr->fields.memory_type = static_cast<ULONG>(memory_type::kWriteBack);
+	Ept02Ptr->fields.pml4_address = UtilPfnFromPa(UtilPaFromVa(Pml4Entry));
+	Ept02Ptr->fields.page_walk_length = 4 - 1;
+	Ept02Ptr->fields.enable_accessed_and_dirty_flags = false;
+
+	const auto pm_ranges = UtilGetPhysicalMemoryRanges();
+	for (auto run_index = 0ul; run_index < pm_ranges->number_of_runs; ++run_index) {
+		const auto run = &pm_ranges->run[run_index];
+		const auto base_addr = run->base_page * PAGE_SIZE;
+		for (auto page_index = 0ull; page_index < run->page_count; ++page_index) {
+			const auto indexed_addr = base_addr + page_index * PAGE_SIZE;
+			if (!EptpConstructTables(Pml4Entry, 4, indexed_addr, nullptr) ||
+				!EptpConstructTablesEx(Pml4Entry, 4, indexed_addr, nullptr,
+									   ept_data12->ept_pml4)) {
+				ept_data02->ept_pointer = Ept02Ptr;
+				ept_data02->ept_pml4 = Pml4Entry;
+				EptFreeNestedEptData(ept_data12, ept_data02);
+				return STATUS_INSUFFICIENT_RESOURCES;
+			}
+		}
+	}
+
+	ept_data02->ept_pointer = Ept02Ptr;
+	ept_data02->ept_pml4 = Pml4Entry;
 	return STATUS_SUCCESS;
 }
 
 EptData* EptBuildEptDataByEptp()
 {	
-	EptData*	EptDataPtr = (EptData*)ExAllocatePoolWithTag(NonPagedPoolMustSucceed, PAGE_SIZE, 'eptd');
-	NT_ASSERT(EptDataPtr);
+	EptData* EptDataPtr = reinterpret_cast<EptData*>(
+		ExAllocatePoolWithTag(NonPagedPoolNx, sizeof(EptData), kHyperPlatformCommonPoolTag));
+	if (!EptDataPtr) {
+		return nullptr;
+	}
 	RtlZeroMemory(EptDataPtr, sizeof(EptData));
 	return EptDataPtr;
 } 

@@ -52,6 +52,7 @@
     <ConfigurationType>Driver</ConfigurationType>
     <DriverType>WDM</DriverType>
     <SpectreMitigation>false</SpectreMitigation>
+    <Driver_SpectreMitigation>false</Driver_SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <TargetVersion>Windows10</TargetVersion>
@@ -60,6 +61,7 @@
     <ConfigurationType>Driver</ConfigurationType>
     <DriverType>WDM</DriverType>
     <SpectreMitigation>false</SpectreMitigation>
+    <Driver_SpectreMitigation>false</Driver_SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <TargetVersion>Windows10</TargetVersion>
@@ -68,6 +70,7 @@
     <ConfigurationType>Driver</ConfigurationType>
     <DriverType>WDM</DriverType>
     <SpectreMitigation>false</SpectreMitigation>
+    <Driver_SpectreMitigation>false</Driver_SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <TargetVersion>Windows10</TargetVersion>
@@ -76,6 +79,7 @@
     <ConfigurationType>Driver</ConfigurationType>
     <DriverType>WDM</DriverType>
     <SpectreMitigation>false</SpectreMitigation>
+    <Driver_SpectreMitigation>false</Driver_SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
     <TargetVersion>Windows10</TargetVersion>
@@ -187,6 +191,8 @@
     <ClInclude Include="ept.h" />
     <ClInclude Include="global_object.h" />
     <ClInclude Include="hotplug_callback.h" />
+    <ClInclude Include="hooks\hook_module.h" />
+    <ClInclude Include="hv\hv.h" />
     <ClInclude Include="ia32_type.h" />
     <ClInclude Include="kernel_stl.h" />
     <ClInclude Include="log.h" />
@@ -206,6 +212,8 @@
     <ClCompile Include="ept.cpp" />
     <ClCompile Include="global_object.cpp" />
     <ClCompile Include="hotplug_callback.cpp" />
+    <ClCompile Include="hooks\hook_module.cpp" />
+    <ClCompile Include="hv\hv.cpp" />
     <ClCompile Include="kernel_stl.cpp" />
     <ClCompile Include="log.cpp" />
     <ClCompile Include="performance.cpp" />

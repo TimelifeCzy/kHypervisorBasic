@@ -16,7 +16,8 @@
 #include "log.h"
 #include "power_callback.h"
 #include "util.h"
-#include "vm.h"
+#include "hv/hv.h"
+#include "hooks/hook_module.h"
 
 #ifndef HYPERPLATFORM_PERFORMANCE_ENABLE_PERFCOUNTER
 #define HYPERPLATFORM_PERFORMANCE_ENABLE_PERFCOUNTER 1
@@ -152,8 +153,22 @@ _Use_decl_annotations_ NTSTATUS DriverEntry(PDRIVER_OBJECT driver_object,
     return status;
   }
 
+  status = HookModuleRegister();
+  if (!NT_SUCCESS(status) && status != STATUS_OBJECT_NAME_COLLISION) {
+    HotplugCallbackTermination();
+    PowerCallbackTermination();
+    UtilTermination();
+    PerfTermination();
+    GlobalObjectTermination();
+    LogTermination();
+    return status;
+  }
+
   // Virtualize all processors
-  status = VmInitialization();
+  const HvRuntimeConfig hv_config = {
+      kHvComponentVmx | kHvComponentEpt | kHvComponentNestedVmx |
+      kHvComponentHooks};
+  status = HvInitialize(&hv_config);
   if (!NT_SUCCESS(status)) {
     HotplugCallbackTermination();
     PowerCallbackTermination();
@@ -181,7 +196,7 @@ _Use_decl_annotations_ static void DriverpDriverUnload(
 
   HYPERPLATFORM_COMMON_DBG_BREAK();
 
-  VmTermination();
+  HvTerminate();
   HotplugCallbackTermination();
   PowerCallbackTermination();
   UtilTermination();

@@ -369,7 +369,7 @@ NTSTATUS SHRestoreMsrSyscall(
 	IN ULONG index
 ) 
 {
-  if (index > MAX_SYSCALL_INDEX) return STATUS_INVALID_PARAMETER;
+  if (index >= MAX_SYSCALL_INDEX) return STATUS_INVALID_PARAMETER;
 
   KIRQL irql = KeGetCurrentIrql();
   if (irql < DISPATCH_LEVEL) irql = KeRaiseIrqlToDpcLevel();
@@ -463,7 +463,7 @@ NTSTATUS AddMsrHook(
 ) 
 {
   NTSTATUS status = STATUS_SUCCESS;
-  if (index > MAX_SYSCALL_INDEX || hookPtr == NULL)
+  if (index >= MAX_SYSCALL_INDEX || hookPtr == NULL)
     return STATUS_INVALID_PARAMETER;
   KIRQL irql = KeGetCurrentIrql();
   if (irql < DISPATCH_LEVEL) irql = KeRaiseIrqlToDpcLevel();
